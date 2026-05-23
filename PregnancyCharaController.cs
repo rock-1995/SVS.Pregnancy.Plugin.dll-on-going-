@@ -168,7 +168,7 @@ namespace SVSPregnancy
                     newemotion.Add(StateKind.TENSION);
                     newemotion.Add(StateKind.TENSION);
                 }
-                PregnancyActorController.ShowText($"{mothername}��{fathername}�Ƃ̌��C�ȐԂ������Y�񂶂����");
+                PregnancyActorController.ShowText($"{mothername} gave birth to {fathername}'s healthy baby.");
                 _pregnancyInfo._cooldown = PregnancyInfo.defaultcooldownDays;
             }
             if (CheckBabySize() == 3)
@@ -202,7 +202,7 @@ namespace SVSPregnancy
                     }
                         
                 }
-                PregnancyActorController.ShowText($"{mothername}��{fathername}�Ƃ̐Ԃ������Y�񂶂����");
+                PregnancyActorController.ShowText($"{mothername} gave birth prematurely to {fathername}'s baby.");
                 _pregnancyInfo._cooldown = PregnancyInfo.defaultcooldownDays;
             }
             else if (CheckBabySize() == 2)
@@ -219,7 +219,7 @@ namespace SVSPregnancy
                     newemotion.Add(StateKind.NORMAL);
                     newemotion.Add(StateKind.NORMAL);
                 }
-                PregnancyActorController.ShowText($"{mothername}��{fathername}�Ƃ̐Ԃ�����������������");
+                PregnancyActorController.ShowText($"{mothername} miscarried {fathername}'s baby.");
                 _pregnancyInfo._cooldown = PregnancyInfo.defaultcooldownDays / 6;
             }
             else if (CheckBabySize() ==1)
@@ -236,7 +236,7 @@ namespace SVSPregnancy
                     newemotion.Add(StateKind.NORMAL);
                     newemotion.Add(StateKind.NORMAL);
                 }
-                PregnancyActorController.ShowText($"{mothername}��{fathername}�Ƃ̐Ԃ�����������������");
+                PregnancyActorController.ShowText($"{mothername} miscarried {fathername}'s baby.");
                 _pregnancyInfo._cooldown = PregnancyInfo.defaultcooldownDays/18;
             }
             PregnancyActorController.AddEmotion(_charaId, newemotion);

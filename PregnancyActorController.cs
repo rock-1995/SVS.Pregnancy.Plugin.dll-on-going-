@@ -146,17 +146,20 @@ namespace SVSPregnancy
         public override void Init(int index, IntPtr ptrActor)
         {
             // ── Spy: confirm Init is reached ─────────────────────────────
-            _spyLog.LogInfo($"[Spy] PAC.Init ENTER index={index} ptrActor=0x{ptrActor:X}");
+            if (ActorSpyEnabled)
+                _spyLog.LogInfo($"[Spy] PAC.Init ENTER index={index} ptrActor=0x{ptrActor:X}");
 
             _index = index;
             _hActorPtr = ptrActor;
 
             int sex = -1;
-            try { sex = GetSex(); } catch (Exception ex) { _spyLog.LogInfo($"[Spy] GetSex threw: {ex.Message}"); }
-            _spyLog.LogInfo($"[Spy] PAC.Init sex={sex}");
+            try { sex = GetSex(); } catch (Exception ex) { if (ActorSpyEnabled) _spyLog.LogInfo($"[Spy] GetSex threw: {ex.Message}"); }
+            if (ActorSpyEnabled)
+                _spyLog.LogInfo($"[Spy] PAC.Init sex={sex}");
 
             _charaId = this.GetCharaId();
-            _spyLog.LogInfo($"[Spy] PAC.Init charaId={_charaId}");
+            if (ActorSpyEnabled)
+                _spyLog.LogInfo($"[Spy] PAC.Init charaId={_charaId}");
 
             if (_charaId < 0)
             {
@@ -169,7 +172,8 @@ namespace SVSPregnancy
             }
             // Clear stale lo-poly SMR/frame cache before H-scene uses hi-poly body.
             BellyVertexMorph.Forget(_charaId);
-            SpyDumpHSceneMeshes(); // no sex filter — dump for all actors
+            if (ActorSpyEnabled)
+                SpyDumpHSceneMeshes(); // no sex filter — dump for all actors
 
             GameObject humanobj = _hActor.Human.gameObject;
             PregnancyHumanController humctrl;
@@ -304,7 +308,7 @@ namespace SVSPregnancy
             yield return new WaitWhile(fseisplaying);*/
             string fathername = this._hActor.Parameter.lastname + this._hActor.Parameter.firstname;
             string mothername = opponent._hActor.Parameter.lastname + opponent._hActor.Parameter.firstname;
-            ShowText($"{mothername}は{fathername}に種付けされて孕まされちゃった");
+            ShowText($"{mothername} was impregnated by {fathername}.");
             List<StateKind> newemotionop = new List<StateKind>();
             Favorability addfavoop = new Favorability();
             if (issynchronic)
@@ -423,11 +427,11 @@ namespace SVSPregnancy
             AddEmotion(oppoId, newemotionop);
             if (addfavoop.feelings[(int)Sensitivity.LOVE].ToDecimal() > 0)
             {
-                ShowText($"{mothername}は{fathername}のことがもっと好きになった");
+                ShowText($"{mothername} likes {fathername} more.");
             }
             if (addfavoop.feelings[(int)Sensitivity.DISLIKE].ToDecimal() > 0)
             {
-                ShowText($"{mothername}は{fathername}のことがもっと嫌いになった");
+                ShowText($"{mothername} dislikes {fathername} more.");
             }
             yield break;
         }
@@ -542,9 +546,11 @@ namespace SVSPregnancy
 
         private static readonly BepInEx.Logging.ManualLogSource _spyLog =
             BepInEx.Logging.Logger.CreateLogSource("SVSPregnancy.Spy");
+        private static bool ActorSpyEnabled => PregnancyPlugin.MeshSpyDebugEnabled;
 
         private void SpyDumpHSceneMeshes()
         {
+            if (!ActorSpyEnabled) return;
             try
             {
                 var human = _human;

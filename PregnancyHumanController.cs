@@ -133,6 +133,7 @@ namespace SVSPregnancy
 
         private static BepInEx.Logging.ManualLogSource _modLog =
             BepInEx.Logging.Logger.CreateLogSource("SVSPregnancy.PHC");
+        private static readonly bool ModifyBellyLogEnabled = false;
         private float _lastLoggedRate = float.NaN;
         private bool  _loggedNullCtrl = false;
 
@@ -174,7 +175,8 @@ namespace SVSPregnancy
 
             if (!Mathf.Approximately(rate, _lastLoggedRate))
             {
-                _modLog.LogInfo($"[PHC] ModifyBelly id={_charaId}: day={day}/{maxDays} startDay={startDay} t={t:F3} rate={rate:F3}");
+                if (ModifyBellyLogEnabled)
+                    _modLog.LogInfo($"[PHC] ModifyBelly id={_charaId}: day={day}/{maxDays} startDay={startDay} t={t:F3} rate={rate:F3}");
                 _lastLoggedRate = rate;
             }
 

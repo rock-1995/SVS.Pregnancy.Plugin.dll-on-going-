@@ -20,7 +20,7 @@ namespace SVSPregnancy
         private Vector2  _vtxScroll         = Vector2.zero;
         private string   _bellyMsg          = "";
 
-        // Text-field buffers — 26 entries, one per vtx param.
+        // Text-field buffers — 32 entries, one per vtx param.
         // Indices:
         //  0  SpineLerpT    1  InflationSize  2  MoveY       3  MoveZ
         //  4  RadiusSide    5  RadiusFront    6  RadiusBack   7  RadiusUp    8  RadiusDown
@@ -30,6 +30,9 @@ namespace SVSPregnancy
         // 19  FatFold       20 FatFoldHeight  21 FatFoldGap
         // 22  BackLimit     23 BackStrength   24 BackSmooth
         // 25  BreastGuard
+        // 26  ClothTopMult  27 ClothBotMult  28 ClothBraMult
+        // 29  ClothShortsMult  30 ClothPanstMult  31 ClothOtherMult
+        // 32  ClothDistortThreshold  33 ClothDistortNeighborDiff
         private string[] _vtxBuf      = null;
         private string   _startDayBuf = "40";
         private bool     _vtxBufInited = false;
@@ -234,7 +237,7 @@ namespace SVSPregnancy
         {
             var s = BellyDeformSettings.Vtx;
             _startDayBuf = BellyDeformSettings.StartDay.ToString();
-            _vtxBuf = new string[26];
+            _vtxBuf = new string[34];
             _vtxBuf[0]  = Fmt(s.SpineLerpT);    _vtxBuf[1]  = Fmt(s.InflationSize);
             _vtxBuf[2]  = Fmt(s.MoveY);          _vtxBuf[3]  = Fmt(s.MoveZ);
             _vtxBuf[4]  = Fmt(s.RadiusSide);     _vtxBuf[5]  = Fmt(s.RadiusFront);
@@ -251,6 +254,14 @@ namespace SVSPregnancy
             _vtxBuf[22] = Fmt(s.BackLimit);      _vtxBuf[23] = Fmt(s.BackStrength);
             _vtxBuf[24] = Fmt(s.BackSmooth);
             _vtxBuf[25] = Fmt(s.BreastGuardStrength);
+            _vtxBuf[26] = Fmt(s.ClothTopMult);
+            _vtxBuf[27] = Fmt(s.ClothBotMult);
+            _vtxBuf[28] = Fmt(s.ClothBraMult);
+            _vtxBuf[29] = Fmt(s.ClothShortsMult);
+            _vtxBuf[30] = Fmt(s.ClothPanstMult);
+            _vtxBuf[31] = Fmt(s.ClothOtherMult);
+            _vtxBuf[32] = Fmt(s.ClothDistortThreshold);
+            _vtxBuf[33] = Fmt(s.ClothDistortNeighborDiff);
         }
 
         /// <summary>Parse the string buffers back into a VtxSettings object.</summary>
@@ -282,6 +293,14 @@ namespace SVSPregnancy
             BackStrength          = ParseF(_vtxBuf[23],  0.000f),
             BackSmooth            = ParseF(_vtxBuf[24],  0.000f),
             BreastGuardStrength   = ParseF(_vtxBuf[25],  1.000f),
+            ClothTopMult          = ParseF(_vtxBuf[26],  1.010f),
+            ClothBotMult          = ParseF(_vtxBuf[27],  1.010f),
+            ClothBraMult          = ParseF(_vtxBuf[28],  1.010f),
+            ClothShortsMult       = ParseF(_vtxBuf[29],  1.010f),
+            ClothPanstMult        = ParseF(_vtxBuf[30],  1.010f),
+            ClothOtherMult        = ParseF(_vtxBuf[31],  1.010f),
+            ClothDistortThreshold = ParseF(_vtxBuf[32],  1.200f),
+            ClothDistortNeighborDiff = ParseF(_vtxBuf[33],  0.450f),
         };
 
         private static float ParseF(string s, float fallback)
@@ -369,6 +388,17 @@ namespace SVSPregnancy
             GUILayout.Space(4);
             GUILayout.Label("── Breast Guard ──────────────────");
             changed |= VR("Breast Guard",  25,   0f,   2f);
+
+            GUILayout.Space(4);
+            GUILayout.Label("── Clothing ──────────────────────");
+            changed |= VR("Top Mult",      26,   0.5f, 3.0f); // 1.01 = +1% displacement
+            changed |= VR("Bottom Mult",   27,   0.5f, 3.0f);
+            changed |= VR("Bra Mult",      28,   0.5f, 3.0f);
+            changed |= VR("Shorts Mult",   29,   0.5f, 3.0f);
+            changed |= VR("Panst Mult",    30,   0.5f, 3.0f);
+            changed |= VR("Other Mult",    31,   0.5f, 3.0f);
+            changed |= VR("Distort Detect",32,   0.0f, 5.0f); // 0 = disabled
+            changed |= VR("Normal Neigh",  33,   0.0f, 3.0f);
 
             GUILayout.EndScrollView();
 

@@ -85,6 +85,30 @@ namespace SVSPregnancy
         /// Values above 1 guard more aggressively.
         /// </summary>
         [JsonPropertyName("breastGuard")] public float BreastGuardStrength { get; set; } = 1.0f;
+
+        // ── Clothing displacement multiplier ─────────────────────────────
+        /// <summary>
+        /// Clothing-only multiplier applied to the final deformation vector.
+        /// 1.00 = same as body displacement; 1.01 = one percent more displacement.
+        /// </summary>
+        [JsonPropertyName("clothOffset")] public float ClothOffset { get; set; } = 1.01f;
+        [JsonPropertyName("clothTopMult")] public float ClothTopMult { get; set; } = 1.01f;
+        [JsonPropertyName("clothBotMult")] public float ClothBotMult { get; set; } = 1.01f;
+        [JsonPropertyName("clothBraMult")] public float ClothBraMult { get; set; } = 1.01f;
+        [JsonPropertyName("clothShortsMult")] public float ClothShortsMult { get; set; } = 1.01f;
+        [JsonPropertyName("clothPanstMult")] public float ClothPanstMult { get; set; } = 1.01f;
+        [JsonPropertyName("clothOtherMult")] public float ClothOtherMult { get; set; } = 1.01f;
+        /// <summary>
+        /// Clothing distortion detection threshold.  Difference between an edge
+        /// vertex displacement and its more-central neighbour, normalised by boneLen.
+        /// 0 disables the repair pass.
+        /// </summary>
+        [JsonPropertyName("clothDistortThreshold")] public float ClothDistortThreshold { get; set; } = 1.20f;
+        /// <summary>
+        /// Maximum displacement difference for a neighbour to be considered a normal
+        /// replacement sample for a distorted clothing vertex, normalised by boneLen.
+        /// </summary>
+        [JsonPropertyName("clothDistortNeighborDiff")] public float ClothDistortNeighborDiff { get; set; } = 0.45f;
     }
 
     // ── JSON data container (internal) ──────────────────────────────────
@@ -92,7 +116,10 @@ namespace SVSPregnancy
     {
         /// <summary>
         /// Config format version.  0 (absent) = old absolute-metre radii.
-        /// 2 = current normalised-by-boneLen radii.
+        /// 2 = normalised-by-boneLen radii, old clothOffset-as-distance.
+        /// 3 = normalised radii, one global clothOffset-as-displacement-multiplier.
+        /// 4 = current normalised radii, per-clothing displacement multipliers.
+        /// 5 = adds clothing edge-distortion repair settings.
         /// If version &lt; 2 the Vtx block is ignored and defaults are used instead.
         /// </summary>
         [JsonPropertyName("version")]  public int         Version  { get; set; } = 0;
@@ -142,7 +169,7 @@ namespace SVSPregnancy
             Vtx      = vtx;
             try
             {
-                var data = new BellySettingsData { Version = 2, StartDay = StartDay, Vtx = Vtx };
+                var data = new BellySettingsData { Version = 5, StartDay = StartDay, Vtx = Vtx };
                 File.WriteAllText(FilePath,
                     JsonSerializer.Serialize(data,
                         new JsonSerializerOptions { WriteIndented = true }));
@@ -180,6 +207,26 @@ namespace SVSPregnancy
                 else if (data.Vtx != null)
                 {
                     Vtx = data.Vtx;
+                    if (data.Version < 3)
+                    {
+                        Vtx.ClothOffset = 1.01f;
+                        log.LogWarning(
+                            "[SVSPregnancy] Config v<3 used old clothOffset distance semantics. " +
+                            "Only clothOffset was reset to 1.01; other Vtx settings were kept.");
+                    }
+                    if (data.Version < 4)
+                    {
+                        float legacy = Vtx.ClothOffset > 0.01f ? Vtx.ClothOffset : 1.01f;
+                        Vtx.ClothTopMult = legacy;
+                        Vtx.ClothBotMult = legacy;
+                        Vtx.ClothBraMult = legacy;
+                        Vtx.ClothShortsMult = legacy;
+                        Vtx.ClothPanstMult = legacy;
+                        Vtx.ClothOtherMult = legacy;
+                        log.LogWarning(
+                            "[SVSPregnancy] Config v<4 used one global cloth multiplier. " +
+                            "Copied it to each clothing class multiplier.");
+                    }
                 }
             }
             catch (Exception e)

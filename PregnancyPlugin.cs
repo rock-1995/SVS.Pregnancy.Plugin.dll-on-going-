@@ -58,8 +58,9 @@ namespace SVSPregnancy
 
         public const string PluginName = "SVSPregnancy";
 
-        public const string Transplanter = "ジェンタイマン";
+        public const string Transplanter = "Zentaiman";
         public const string PluginVersion = "0.2.7";
+        public const string BuildMarker = "20260523-accessory-same-anchor-rigid1";
         public static PregnancyWorldController _worldController;
 
         public static PregnancyAssetController _assetController;                    
@@ -71,13 +72,14 @@ namespace SVSPregnancy
         public static ConfigEntry<bool> ConfigLog { get; private set; }
 
         public static ConfigEntry<KeyCode> DebugUIKey { get; private set; }
+        public static ConfigEntry<bool> ConfigEnableSpy { get; private set; }
         public static ConfigEntry<bool> FutanariCanInseminate { get; private set; }
         public static ConfigEntry<int> OvulationRateSafe { get; private set; }
         public static ConfigEntry<int> OvulationRateNormal { get; private set; }
         public static ConfigEntry<int> OvulationRateDanger { get; private set; }
         public static ConfigEntry<int> PregnancyProgressionSpeed { get; private set; }
 
-        public static ConfigEntry<WpCutInMode_JP> CutInFertilize_JP { get; private set; }
+        public static ConfigEntry<WpCutInMode> CutInFertilizeMode { get; private set; }
 
         public static ConfigEntry<int> CutInFertilize_X { get; private set; }
 
@@ -112,22 +114,22 @@ namespace SVSPregnancy
 
             bc7
         }
-        public enum WpCutInMode_JP
+        public enum WpCutInMode
         {
 
-            なし,
+            None,
 
-            右から左,
+            RightToLeft,
 
-            左から右,
+            LeftToRight,
 
-            上から下,
+            TopToBottom,
 
-            下から上,
+            BottomToTop,
 
-            奥から前,
+            BackToFront,
 
-            前から奥
+            FrontToBack
         }
 
         public static PregnancyAssetController.Wipe.CutInMode CutInFertilize
@@ -135,30 +137,34 @@ namespace SVSPregnancy
             get
             {
 
-                switch (CutInFertilize_JP.Value)
+                switch (CutInFertilizeMode.Value)
                 {
-                    case WpCutInMode_JP.なし:
+                    case WpCutInMode.None:
                         return PregnancyAssetController.Wipe.CutInMode.None;
-                    case WpCutInMode_JP.右から左:
+                    case WpCutInMode.RightToLeft:
                         return PregnancyAssetController.Wipe.CutInMode.Right2Left;
-                    case WpCutInMode_JP.左から右:
+                    case WpCutInMode.LeftToRight:
                         return PregnancyAssetController.Wipe.CutInMode.Left2Right;
-                    case WpCutInMode_JP.上から下:
+                    case WpCutInMode.TopToBottom:
                         return PregnancyAssetController.Wipe.CutInMode.Top2Down;
-                    case WpCutInMode_JP.下から上:
+                    case WpCutInMode.BottomToTop:
                         return PregnancyAssetController.Wipe.CutInMode.Down2Top;
-                    case WpCutInMode_JP.奥から前:
+                    case WpCutInMode.BackToFront:
                         return PregnancyAssetController.Wipe.CutInMode.Back2Front;
-                    case WpCutInMode_JP.前から奥:
+                    case WpCutInMode.FrontToBack:
                         return PregnancyAssetController.Wipe.CutInMode.Front2Back;
                     default:
                         return PregnancyAssetController.Wipe.CutInMode.None;
                 }
             }
         }
+
+        internal static bool MeshSpyDebugEnabled => ConfigEnableSpy != null && ConfigEnableSpy.Value;
+
         public override void Load()
         {
             PregnancyPlugin._instance = this;
+            Log.LogInfo($"[SVSPregnancy] BuildMarker={BuildMarker} asm={typeof(PregnancyPlugin).Assembly.Location}");
 
             if (_hi == null)
             {
@@ -195,7 +201,9 @@ namespace SVSPregnancy
 
             #region Config  
 
-            ConfigEnable = base.Config.Bind<bool>("General", "Enable", true, new ConfigDescription("", null, new object[]
+            ConfigFile cfg = Config;
+
+            ConfigEnable = cfg.Bind<bool>("General", "Enable", true, new ConfigDescription("", null, new object[]
             {
                 new ConfigurationManagerAttributes
                             {
@@ -203,7 +211,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-            ConfigLog = base.Config.Bind<bool>("General", "Log Enable", true, new ConfigDescription("", null, new object[]
+            ConfigLog = cfg.Bind<bool>("General", "Log Enable", true, new ConfigDescription("", null, new object[]
                   {
                       new ConfigurationManagerAttributes
                             {
@@ -211,7 +219,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
                   }));
-            FutanariCanInseminate = base.Config.Bind<bool>("General", "Futanaris Can Inseminate", true, new ConfigDescription("フタナリたちも相手をできさせたことができる", null, new object[]
+            FutanariCanInseminate = cfg.Bind<bool>("General", "Futanaris Can Inseminate", true, new ConfigDescription("Allow futanari characters to impregnate partners. Only biologically female characters can become pregnant.", null, new object[]
                   {
                       new ConfigurationManagerAttributes
                             {
@@ -219,12 +227,12 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
                   }));
-            PregnancyProgressionSpeed = Config.Bind("General", "Pregnancy progression speed", 1,
+            PregnancyProgressionSpeed = cfg.Bind("General", "Pregnancy progression speed", 1,
                 new ConfigDescription("How much faster does the in-game pregnancy progresses than the standard 40 weeks. " +
                                     "It also reduces the time characters leave school for after birth.\n\n" +
                                     "x1 is 40 weeks, x2 is 20 weeks, x4 is 10 weeks, etc.",
                                     new AcceptableValueList<int>(1, 2, 4, 7, 14, 30,60,100,365)));
-            OvulationRateSafe = base.Config.Bind<int>("General", "Ovulation Rate in Safe Days", 0, new ConfigDescription("安全日での排卵率", new AcceptableValueRange<int>(0, 100), new object[]
+            OvulationRateSafe = cfg.Bind<int>("General", "Ovulation Rate in Safe Days", 0, new ConfigDescription("Ovulation rate during safe days.", new AcceptableValueRange<int>(0, 100), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -233,7 +241,7 @@ namespace SVSPregnancy
                             }
             }));
 
-            OvulationRateNormal = base.Config.Bind<int>("General", "Ovulation Rate in Normal Days", 5, new ConfigDescription("通常日での排卵率", new AcceptableValueRange<int>(0, 100), new object[]
+            OvulationRateNormal = cfg.Bind<int>("General", "Ovulation Rate in Normal Days", 5, new ConfigDescription("Ovulation rate during normal days.", new AcceptableValueRange<int>(0, 100), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -242,7 +250,7 @@ namespace SVSPregnancy
                             }
             }));
 
-            OvulationRateDanger = base.Config.Bind<int>("General", "Ovulation Rate in Dangerous Days", 50, new ConfigDescription("危険日での排卵率", new AcceptableValueRange<int>(0, 100), new object[]
+            OvulationRateDanger = cfg.Bind<int>("General", "Ovulation Rate in Dangerous Days", 50, new ConfigDescription("Ovulation rate during dangerous days.", new AcceptableValueRange<int>(0, 100), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -251,19 +259,28 @@ namespace SVSPregnancy
                             }
             }));
 
-            DebugUIKey = Config.Bind("Debug", "Debug UI Key",
+            DebugUIKey = cfg.Bind("Debug", "Debug UI Key",
                 KeyCode.F8,
                 new ConfigDescription("Key to toggle the pregnancy debug UI window.", null, new ConfigurationManagerAttributes { Order = 1, Browsable = true }));
 
+            ConfigEnableSpy = cfg.Bind<bool>("Debug", "Enable Spy", false, new ConfigDescription("Enable diagnostic mesh spy logging and probes. Clothing loader stays enabled either way.", null, new object[]
+            {
+                new ConfigurationManagerAttributes
+                {
+                    Order = new int?(0),
+                    Browsable = new bool?(true)
+                }
+            }));
+
             /*
-            CutInFertilize_JP = base.Config.Bind<WpCutInMode_JP>("Cut-In", "受精カットインの方式", WpCutInMode_JP.奥から前, new ConfigDescription("", null, new object[]
+            CutInFertilizeMode = base.Config.Bind<WpCutInMode>("Cut-In", "Fertilization Cut-In Mode", WpCutInMode.BackToFront, new ConfigDescription("", null, new object[]
                         {
                             new ConfigurationManagerAttributes
                             {
                                 Order = new int?(54)
                             }
                         }));
-            CutInFertilize_X = base.Config.Bind<int>("Cut-In", "受精カットインのX位置(%)", -80, new ConfigDescription("", new AcceptableValueRange<int>(-100, 100), new object[]
+            CutInFertilize_X = base.Config.Bind<int>("Cut-In", "Fertilization Cut-In X Position (%)", -80, new ConfigDescription("", new AcceptableValueRange<int>(-100, 100), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -271,7 +288,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-            CutInFertilize_Y = base.Config.Bind<int>("Cut-In", "受精カットインのY位置(%)", -65, new ConfigDescription("", new AcceptableValueRange<int>(-100, 100), new object[]
+            CutInFertilize_Y = base.Config.Bind<int>("Cut-In", "Fertilization Cut-In Y Position (%)", -65, new ConfigDescription("", new AcceptableValueRange<int>(-100, 100), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -279,7 +296,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-            CutInFertilize_Z = base.Config.Bind<int>("Cut-In", "受精カットインの拡大率(%)", 25, new ConfigDescription("", new AcceptableValueRange<int>(1, 150), new object[]
+            CutInFertilize_Z = base.Config.Bind<int>("Cut-In", "Fertilization Cut-In Scale (%)", 25, new ConfigDescription("", new AcceptableValueRange<int>(1, 150), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -287,7 +304,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-            CutInFertilize_Ratio = base.Config.Bind<float>("Cut-In", "受精カットインの横縦比", 4f / 3f, new ConfigDescription("", new AcceptableValueRange<float>(0.1f, 10f), new object[]
+            CutInFertilize_Ratio = base.Config.Bind<float>("Cut-In", "Fertilization Cut-In Aspect Ratio", 4f / 3f, new ConfigDescription("", new AcceptableValueRange<float>(0.1f, 10f), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -295,7 +312,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-            CutInFertilize_Wait = base.Config.Bind<float>("Cut-In", "受精カットインの待機秒数", 0.1f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 30f), new object[]
+            CutInFertilize_Wait = base.Config.Bind<float>("Cut-In", "Fertilization Cut-In Delay Seconds", 0.1f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 30f), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -304,7 +321,7 @@ namespace SVSPregnancy
                             }
             }));
 
-            CutInFertilize_Loop = base.Config.Bind<float>("Cut-In", "受精カットインの持続秒数", 7.9f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 30f), new object[]
+            CutInFertilize_Loop = base.Config.Bind<float>("Cut-In", "Fertilization Cut-In Duration Seconds", 7.9f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 30f), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -312,7 +329,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-            CutInFertilize_FPS = base.Config.Bind<int>("Cut-In", "受精カットインのフレームレート", 24, new ConfigDescription("", new AcceptableValueRange<int>(1, 60), new object[]
+            CutInFertilize_FPS = base.Config.Bind<int>("Cut-In", "Fertilization Cut-In Frame Rate", 24, new ConfigDescription("", new AcceptableValueRange<int>(1, 60), new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -322,7 +339,7 @@ namespace SVSPregnancy
             }));
 
             /*
-            CutInFertilize_SoundPath = base.Config.Bind<string>("Cut-In", "受精の效果音", "UserData\\soundeffect\\Fertilize.ogg", new ConfigDescription("受精するときの效果音", null, new object[]
+            CutInFertilize_SoundPath = base.Config.Bind<string>("Cut-In", "Fertilization Sound Effect", "UserData\\soundeffect\\Fertilize.ogg", new ConfigDescription("Sound effect played during fertilization.", null, new object[]
             {
                             new ConfigurationManagerAttributes
                             {
@@ -330,7 +347,7 @@ namespace SVSPregnancy
                                 Browsable = new bool?(true)
                             }
             }));
-           TextureFolder = base.Config.Bind<string>("Cut-In", "テクスチャフォルダ", "UserData\\Overlays\\LewdCrest", new ConfigDescription("テクスチャが保存されているフォルダを指定します。", null, new object[]
+           TextureFolder = base.Config.Bind<string>("Cut-In", "Texture Folder", "UserData\\Overlays\\LewdCrest", new ConfigDescription("Folder where cut-in textures are stored.", null, new object[]
                         {
                             new ConfigurationManagerAttributes
                             {
@@ -378,6 +395,27 @@ namespace SVSPregnancy
         private static readonly BepInEx.Logging.ManualLogSource _meshSpyLog =
             BepInEx.Logging.Logger.CreateLogSource("SVSPregnancy.MeshSpy");
 
+        private ConfigFile OpenConfigForLoad()
+        {
+            string primary = Path.Combine(Paths.ConfigPath, Constants.Prefix + PluginGuid + ".cfg");
+            try
+            {
+                return new ConfigFile(primary, true);
+            }
+            catch (IOException e)
+            {
+                string fallback = Path.Combine(Paths.ConfigPath, Constants.Prefix + PluginGuid + ".fallback.cfg");
+                Log.LogWarning($"[SVSPregnancy] primary config locked, using fallback config for this run. primary=\"{primary}\" fallback=\"{fallback}\" error=\"{e.Message}\"");
+                return new ConfigFile(fallback, true);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                string fallback = Path.Combine(Paths.ConfigPath, Constants.Prefix + PluginGuid + ".fallback.cfg");
+                Log.LogWarning($"[SVSPregnancy] primary config inaccessible, using fallback config for this run. primary=\"{primary}\" fallback=\"{fallback}\" error=\"{e.Message}\"");
+                return new ConfigFile(fallback, true);
+            }
+        }
+
         private static string MeshSpyGetPath(Transform t)
         {
             if (t == null) return "(null)";
@@ -410,16 +448,8 @@ namespace SVSPregnancy
         {
             try
             {
-                var setter = AccessTools.Method(typeof(SkinnedMeshRenderer), "set_sharedMesh");
-                if (setter != null)
-                {
-                    _hi.Patch(setter, postfix: new HarmonyMethod(typeof(PregnancyPlugin), nameof(MeshSpyPostfix)));
-                    Log.LogInfo("[SVSPregnancy] MeshSpy: patched SkinnedMeshRenderer.set_sharedMesh");
-                }
-                else
-                {
-                    Log.LogWarning("[SVSPregnancy] MeshSpy: set_sharedMesh not found");
-                }
+                MeshSpyFull.Install(_hi);
+                Log.LogInfo("[SVSPregnancy] Cloth mesh loader hook installed");
             }
             catch (Exception e)
             {
