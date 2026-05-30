@@ -1,0 +1,157 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SVS_Pregnancy</AssemblyName>
+    <BaseOutputPath>..\bin\</BaseOutputPath>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <SVSGameDir Condition="'$(SVSGameDir)' == ''">$(SVS_GAME_DIR)</SVSGameDir>
+    <SVSBepInExDir Condition="'$(SVSBepInExDir)' == '' and '$(SVSGameDir)' != ''">$(SVSGameDir)\BepInEx</SVSBepInExDir>
+    <SVSCoreDir Condition="'$(SVSCoreDir)' == '' and '$(SVSBepInExDir)' != ''">$(SVSBepInExDir)\core</SVSCoreDir>
+    <SVSInteropDir Condition="'$(SVSInteropDir)' == '' and '$(SVSBepInExDir)' != ''">$(SVSBepInExDir)\SamabakeScramble\interop</SVSInteropDir>
+  </PropertyGroup>
+
+  <Target Name="CheckSVSReferencePaths" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(SVSCoreDir)' == '' or '$(SVSInteropDir)' == ''"
+           Text="Set SVSGameDir to your SamabakeScramble folder, or copy Directory.Build.props.example to Directory.Build.props and edit the path." />
+  </Target>
+
+  <!-- Hook version (default): WorldData.Save hook, no FSW -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SVS;SAVE_HOOK</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SVS;SAVE_HOOK</DefineConstants>
+  </PropertyGroup>
+
+  <!-- FSW backup version: FileSystemWatcher only, no hook -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FSW|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SVS;SAVE_FSW</DefineConstants>
+    <AssemblyName>SVS_Pregnancy_FSW</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(SVSCoreDir)\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(SVSInteropDir)\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(SVSInteropDir)\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(SVSCoreDir)\BepInEx.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Unity.Common">
+      <HintPath>$(SVSCoreDir)\BepInEx.Unity.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(SVSCoreDir)\BepInEx.Unity.IL2CPP.dll</HintPath>
+    </Reference>
+    <Reference Include="Coffee.CompositeCanvas">
+      <HintPath>$(SVSInteropDir)\Coffee.CompositeCanvas.dll</HintPath>
+    </Reference>
+    <Reference Include="Coffee.UnmaskForUGUI">
+      <HintPath>$(SVSInteropDir)\Coffee.UnmaskForUGUI.dll</HintPath>
+    </Reference>
+    <Reference Include="IL">
+      <HintPath>$(SVSInteropDir)\IL.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(SVSCoreDir)\Il2CppInterop.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppInterop.HarmonySupport">
+      <HintPath>$(SVSCoreDir)\Il2CppInterop.HarmonySupport.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(SVSCoreDir)\Il2CppInterop.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(SVSInteropDir)\Il2Cppmscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>$(SVSInteropDir)\Il2CppSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppSystem.Core">
+      <HintPath>$(SVSInteropDir)\Il2CppSystem.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MagicaCloth">
+      <HintPath>$(SVSInteropDir)\MagicaCloth.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>$(SVSCoreDir)\MonoMod.RuntimeDetour.dll</HintPath>
+    </Reference>
+    <Reference Include="UIAnimator">
+      <HintPath>$(SVSInteropDir)\UIAnimator.dll</HintPath>
+    </Reference>
+    <Reference Include="UniRx">
+      <HintPath>$(SVSInteropDir)\UniRx.dll</HintPath>
+    </Reference>
+    <Reference Include="UniTask">
+      <HintPath>$(SVSInteropDir)\UniTask.dll</HintPath>
+    </Reference>
+    <Reference Include="UniTask.Linq">
+      <HintPath>$(SVSInteropDir)\UniTask.Linq.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(SVSInteropDir)\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.AudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.ImageConversionModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.InputModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UIElementsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsNativeModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UIElementsNativeModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestWWWModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>$(SVSInteropDir)\UnityEngine.VideoModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+
+</Project>
